@@ -40,4 +40,10 @@ public class DetectionController {
 
         return ResponseEntity.ok(response);
     }
+
+
+    @GetMapping
+    public ResponseEntity<?> getAllDetections() {
+        return ResponseEntity.ok(detectionService.getAllDetections());
+    }
 }

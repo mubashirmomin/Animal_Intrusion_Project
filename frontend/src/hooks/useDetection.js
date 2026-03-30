@@ -18,8 +18,11 @@ export function useDetection() {
       const data = await detectAnimal(file)
       setResult(data)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Detection failed. Is the backend running?')
-    } finally {
+setError(
+  err?.response?.data?.message ||
+  err?.message ||
+  'Detection failed. Is the backend running?'
+)    } finally {
       setLoading(false)
     }
   }, [])

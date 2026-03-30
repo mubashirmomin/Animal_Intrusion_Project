@@ -7,9 +7,13 @@ import { ShieldAlert, Zap, Database } from 'lucide-react'
 export default function Home() {
   const { result, loading, error, runDetection, reset } = useDetection()
 
-  const handleSubmit = (file) => {
-    reset()
-    runDetection(file)
+  const handleSubmit = async (file) => {
+    try {
+      reset()
+      await runDetection(file)   // ✅ ensure async handled properly
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   return (
@@ -36,6 +40,7 @@ export default function Home() {
         {/* Result panel */}
         <section style={s.panel}>
           <p style={s.panelLabel}>02 / Detection result</p>
+
           {!result && !error && !loading && (
             <div style={s.emptyResult}>
               <ShieldAlert size={32} color="var(--text-3)" strokeWidth={1} />
@@ -44,6 +49,12 @@ export default function Home() {
               </p>
             </div>
           )}
+
+          {/* ✅ Show loader explicitly (optional but nice UX) */}
+          {loading && (
+            <p style={{ textAlign: 'center', fontSize: 13 }}>Analyzing image...</p>
+          )}
+
           <ResultCard result={result} error={error} />
         </section>
       </div>
@@ -52,8 +63,8 @@ export default function Home() {
       <div style={s.flow}>
         {[
           { step: '01', label: 'Upload', desc: 'Image sent to Spring Boot backend via POST /api/detection' },
-          { step: '02', label: 'Detect',  desc: 'AIService calls Roboflow model — returns animal + confidence' },
-          { step: '03', label: 'Alert',   desc: 'If detected: record saved to MySQL + Telegram alert sent' },
+          { step: '02', label: 'Detect',  desc: 'AIService processes image and returns animal + confidence' },
+          { step: '03', label: 'Alert',   desc: 'If detected: saved in DB + Telegram alert sent' },
         ].map(({ step, label, desc }, i) => (
           <React.Fragment key={step}>
             <div style={s.flowStep}>

@@ -9,6 +9,7 @@ import com.kaif.animalintrusionbackend.service.TelegramService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class DetectionServiceImpl implements DetectionService {
@@ -53,5 +54,11 @@ public class DetectionServiceImpl implements DetectionService {
 
         // 3. Return response to controller
         return response;
+    }
+
+
+    @Override
+    public List<Detection> getAllDetections() {
+        return detectionRepository.findAll();
     }
 }

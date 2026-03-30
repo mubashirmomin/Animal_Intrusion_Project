@@ -4,11 +4,13 @@ import com.kaif.animalintrusionbackend.service.TelegramService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriUtils;
 
-import java.nio.charset.StandardCharsets;
+
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class TelegramServiceImpl implements TelegramService {
@@ -28,16 +30,17 @@ public class TelegramServiceImpl implements TelegramService {
     @Override
     public void sendAlert(String animal, Double confidence) {
 
+        String url = "https://api.telegram.org/bot" + botToken + "/sendMessage";
+
         String message = buildMessage(animal, confidence);
 
-        String url = "https://api.telegram.org/bot" + botToken +
-                "/sendMessage?chat_id=" + chatId +
-//                Telegram sometimes breaks with spaces ("&text=" + message)
-//                → encode message
-                "&text=" + UriUtils.encode(message, StandardCharsets.UTF_8);
+        Map<String, String> body = new HashMap<>();
+        body.put("chat_id", chatId);
+        body.put("text", message);
+        body.put("parse_mode", "Markdown");
 
         try {
-            restTemplate.getForObject(url, String.class);
+            restTemplate.postForObject(url, body, String.class);
         } catch (Exception e) {
             System.out.println("Failed to send Telegram alert");
         }
@@ -48,9 +51,9 @@ public class TelegramServiceImpl implements TelegramService {
         String time = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("hh:mm a"));
 
-        return "🚨 Alert!\n" +
-                animal + " detected\n" +
-                "Confidence: " + Math.round(confidence * 100) + "%\n" +
-                "Time: " + time;
+        return "🚨 *Animal Alert!*\n\n" +
+                "🐾 Animal: *" + animal + "*\n" +
+                "📊 Confidence: *" + Math.round(confidence * 100) + "%*\n" +
+                "⏰ Time: " + time;
     }
 }

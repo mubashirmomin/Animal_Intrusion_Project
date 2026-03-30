@@ -29,7 +29,7 @@ export async function detectAnimal(imageFile) {
  * @returns {Promise<Array<{ id, animalType, confidence, imagePath, detectedAt }>>}
  */
 export async function getDetectionHistory() {
-  const response = await api.get('/api/detection/history')
+  const response = await api.get('/api/detection')
   return response.data
 }
 
