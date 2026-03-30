@@ -1,8 +1,0 @@
-path: datasets/animals
-train: images/train
-val: images/val
-
-names:
-  0: elephant
-  1: leopard
-  2: wild_boar

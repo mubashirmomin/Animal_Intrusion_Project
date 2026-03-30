@@ -1,4 +1,9 @@
 package com.kaif.animalintrusionbackend.service;
 
-public class DetectionService {
+import com.kaif.animalintrusionbackend.dto.AIDetectionResponse;
+
+public interface DetectionService {
+
+    AIDetectionResponse processDetection(String imagePath);
+
 }
