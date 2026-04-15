@@ -30,7 +30,7 @@ public class DetectionServiceImpl implements DetectionService {
     public AIDetectionResponse processDetection(String imagePath) {
 
         // 1. Call AI Service
-        AIDetectionResponse response = aiService.detectAnimal(imagePath);
+        AIDetectionResponse response = aiService.detect(imagePath);
 
         // 2. If animal detected → Save + Alert
         if (response.isDetected()) {

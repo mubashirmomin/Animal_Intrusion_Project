@@ -4,6 +4,6 @@ import com.kaif.animalintrusionbackend.dto.AIDetectionResponse;
 
 public interface AIService {
 
-    AIDetectionResponse detectAnimal(String imagePath);
+    AIDetectionResponse detect(String imagePath);
 
 }

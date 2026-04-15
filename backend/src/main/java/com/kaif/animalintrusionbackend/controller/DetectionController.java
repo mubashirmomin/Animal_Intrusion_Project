@@ -25,9 +25,11 @@ public class DetectionController {
     public ResponseEntity<AIDetectionResponse> detect(
             @RequestParam("file") MultipartFile file) {
 
+        System.out.println("📸 Image received: " + file.getOriginalFilename());
+
         // 1. Basic validation
         if (file.isEmpty()) {
-            throw new RuntimeException("File cannot be empty");
+            return ResponseEntity.badRequest().body(null);
         }
 
         // 2. Save file
