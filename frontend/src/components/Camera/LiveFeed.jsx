@@ -1,33 +1,131 @@
-import React from 'react'
+
+
+
+import React, { useEffect, useRef, useState } from 'react'
 import { Camera, Wifi } from 'lucide-react'
+import axios from 'axios'
 
-/**
- * LiveFeed — future Raspberry Pi camera integration.
- * This component is a placeholder. When the Pi is ready:
- * 1. Replace STREAM_URL with your Pi's MJPEG or WebRTC stream endpoint.
- * 2. Set up polling or a WebSocket to push frames to /api/detection automatically.
- */
-
-const STREAM_URL = null  // e.g. 'http://192.168.1.x:8080/stream.mjpg'
+const STREAM_URL = null
 
 export default function LiveFeed() {
-  if (STREAM_URL) {
+
+  console.log("LiveFeed mounted");
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
+  const [stream, setStream] = useState(null)
+  const [cameraOn, setCameraOn] = useState(false)
+  const isProcessingRef = useRef(false); // 🔒 prevents multiple triggers
+  const lastCaptureTimeRef = useRef(0);
+
+  // 🔥 Poll motion
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get("http://localhost:8080/api/motion/status")
+
+        const now = Date.now();
+
+      if (
+          res.data === true &&
+          !isProcessingRef.current &&
+          now - lastCaptureTimeRef.current > 5000 // ⏱️ 5 sec cooldown
+        ){
+          console.log("🚨 Motion detected");
+
+          isProcessingRef.current = true;
+          lastCaptureTimeRef.current = now;
+
+          startCamera();
+         }
+        
+      } catch (err) {
+        console.error(err)
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [cameraOn])
+
+ const startCamera = async () => {
+  setCameraOn(true); // 🔥 FIRST render video
+
+  setTimeout(async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        setStream(mediaStream);
+      }
+
+      setTimeout(captureImage, 2000);
+
+    } catch (err) {
+      console.error("Camera error:", err);
+    }
+  }, 300); // 🔥 small delay for DOM render
+};
+
+  const captureImage = () => {
+  const video = videoRef.current;
+  const canvas = canvasRef.current;
+
+  if (!video || !canvas) return; // 🔥 prevent crash
+
+  if (!video.videoWidth) return; // 🔥 wait until video ready
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0);
+
+  canvas.toBlob(async (blob) => {
+    const formData = new FormData();
+    formData.append("file", blob, "capture.jpg");
+
+    await axios.post("http://localhost:8080/api/detection", formData);
+
+    console.log("📸 Image sent");
+
+    stopCamera();
+
+    await axios.post("http://localhost:8080/api/motion/reset");
+    isProcessingRef.current = false; // 🔓 UNLOCK
+  }, "image/jpeg");
+};
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
+    }
+    setCameraOn(false)
+  }
+
+  // 🔥 If camera active → show video instead of placeholder
+  if (cameraOn) {
     return (
       <div style={s.wrap}>
         <div style={s.header}>
           <div style={s.liveDot} />
           <span style={s.liveLabel}>LIVE</span>
-          <span style={s.camLabel}>Camera 01 · Raspberry Pi</span>
+          <span style={s.camLabel}>Camera Active</span>
         </div>
-        <img
-          src={STREAM_URL}
-          alt="Live camera feed"
+
+        <video
+          ref={videoRef}
+          autoPlay
           style={s.stream}
         />
+
+        <canvas ref={canvasRef} style={{ display: "none" }} />
       </div>
     )
   }
 
+  // 🔥 Existing UI (unchanged)
   return (
     <div style={s.placeholder}>
       <div style={s.iconWrap}>
@@ -35,12 +133,12 @@ export default function LiveFeed() {
       </div>
       <p style={s.title}>Live feed — not yet connected</p>
       <p style={s.sub}>
-        Raspberry Pi integration is pending.<br />
-        Set <code style={s.code}>STREAM_URL</code> in <code style={s.code}>LiveFeed.jsx</code> to activate.
+        Motion-triggered camera system ready.<br />
+        Waiting for motion detection...
       </p>
       <div style={s.hint}>
         <Wifi size={12} color="var(--text-3)" />
-        <span>Expected: MJPEG stream over local network</span>
+        <span>ESP32 + PIR will trigger camera</span>
       </div>
     </div>
   )

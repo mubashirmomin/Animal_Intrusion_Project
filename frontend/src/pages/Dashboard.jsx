@@ -1,3 +1,7 @@
+
+console.log("Dashboard loaded");
+
+import LiveFeed from "../components/Camera/LiveFeed";
 import React, { useEffect, useMemo } from 'react'
 import { useHistory } from '../hooks/useDetection.js'
 import Loader from '../components/UI/Loader.jsx'
@@ -90,6 +94,9 @@ export default function Dashboard() {
 
       {!loading && (
         <>
+         <div style={{ marginBottom: 20 }}>
+             <LiveFeed />
+         </div>
           {/* Stat cards */}
           <div style={s.statRow}>
             <StatCard label="Total detections" value={stats.total} sub="All time" />
