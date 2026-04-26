@@ -1,108 +1,128 @@
-# 🐾 Animal Intrusion Detection System
+# 🐾 Animal Intrusion Detection System (AI + IoT + Full Stack)
 
-A full-stack application that detects animals from images and sends real-time alerts via Telegram.
-Designed as a foundation for smart surveillance systems using AI and IoT (Raspberry Pi ready).
-
----
-
-## 🚀 Features
-
-* 📤 Upload image for detection
-* 🤖 AI-based animal detection (currently simulated)
-* 🐘 Detects animals like Elephant, Tiger, Leopard, Wild Boar, etc.
-* 📊 Displays detection results with confidence score
-* 🗄️ Stores detection history in MySQL
-* 📱 Sends real-time alerts via Telegram Bot
-* 📜 View past detection records (History page)
+A real-time intelligent surveillance system that detects animal intrusion using **IoT motion sensing, AI image detection, and full-stack web integration**, and sends instant alerts via Telegram.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Key Highlights
 
-### Frontend
-
-* React (Vite)
-* JavaScript (ES6+)
-* Axios
-* Custom Hooks (useDetection, useHistory)
-
-### Backend
-
-* Spring Boot (Java)
-* REST APIs
-* Layered Architecture (Controller → Service → Repository)
-
-### Database
-
-* MySQL
-* JPA / Hibernate
-
-### Integrations
-
-* Telegram Bot API
-* File Upload (MultipartFile)
+* 📡 **IoT Motion Detection (ESP32 + PIR Sensor)**
+* ⚡ **Real-time event-driven workflow**
+* 🎥 **Auto camera activation (React + getUserMedia)**
+* 🤖 **AI-based detection using Roboflow API**
+* 📊 **Confidence-based filtering to reduce false positives**
+* 🗄️ **Detection history stored in MySQL**
+* 📱 **Instant Telegram alerts**
+* 🔁 **Frontend–Backend synchronization via polling**
 
 ---
 
-## 📁 Project Structure
+## 🧠 System Architecture
 
-### Frontend
-
-```
-src/
-├── components/
-│   ├── Upload/
-│   ├── Detection/
-│   ├── UI/
-├── hooks/
-│   ├── useDetection.js
-│   ├── useHistory.js
-├── pages/
-│   ├── Home.jsx
-│   ├── Dashboard.jsx
-│   ├── History.jsx
-├── services/
-│   └── api.js
-```
-
-### Backend
+Motion detection triggers a complete pipeline:
 
 ```
-controller/        → DetectionController
-service/           → Business logic
-service/impl/      → Implementations
-entity/            → Detection entity
-repo/              → JPA repository
-dto/               → AIDetectionResponse
+ESP32 (PIR Sensor)
+        ↓
+POST /api/motion
+        ↓
+Spring Boot Backend (flag update)
+        ↓
+Frontend Polling (/api/motion/status)
+        ↓
+Camera Activation (getUserMedia)
+        ↓
+Image Capture (Canvas)
+        ↓
+POST /api/detection
+        ↓
+AI Detection (Roboflow API)
+        ↓
+Database + Telegram Alert
 ```
 
 ---
 
 ## ⚙️ How It Works
 
-1. User uploads an image from the frontend
-2. Image is sent to backend (`POST /api/detection`)
-3. Backend:
+### 1️⃣ IoT Layer (ESP32)
 
-   * Saves image locally
-   * Runs AI detection (mocked for now)
-   * Stores result in database
-   * Sends Telegram alert (if animal detected)
-4. Response is returned and displayed in UI
+* PIR sensor detects motion
+* ESP32 sends HTTP POST request to backend:
+
+```
+POST /api/motion
+```
+
+---
+
+### 2️⃣ Backend Layer (Spring Boot)
+
+* Layered architecture:
+
+  ```
+  Controller → Service → Repository
+  ```
+* Handles:
+
+  * Motion state management
+  * Image processing
+  * AI API integration
+  * Telegram alerts
+
+#### Key APIs:
+
+* `/api/motion` → triggered by ESP32
+* `/api/motion/status` → used by frontend polling
+* `/api/detection` → image upload & AI detection
+
+---
+
+### 3️⃣ Frontend Layer (React)
+
+* Polls backend continuously
+* On motion detection:
+
+  * Activates camera using `getUserMedia()`
+  * Captures image via `<canvas>`
+  * Sends image to backend
+
+---
+
+### 4️⃣ AI Detection Layer
+
+* Image sent to **Roboflow API** (Base64 encoded)
+* Returns:
+
+  * Animal class
+  * Confidence score
+* Backend filters low-confidence results
 
 ---
 
 ## 📡 API Endpoints
 
+### 🔹 POST `/api/motion`
+
+Triggered by ESP32 when motion is detected
+
+---
+
+### 🔹 GET `/api/motion/status`
+
+Returns motion flag for frontend polling
+
+```json
+{
+  "motion": true
+}
+```
+
+---
+
 ### 🔹 POST `/api/detection`
 
-Upload image for detection
-
-**Request:**
-
-* Multipart file
-
-**Response:**
+Upload captured image
 
 ```json
 {
@@ -116,19 +136,38 @@ Upload image for detection
 
 ### 🔹 GET `/api/detection`
 
-Fetch all detection records
+Fetch detection history
 
-```json
-[
-  {
-    "id": 1,
-    "animalType": "Tiger",
-    "confidence": 0.91,
-    "imagePath": "...",
-    "detectedAt": "timestamp"
-  }
-]
-```
+---
+
+## 🛠️ Tech Stack
+
+### 🔹 IoT
+
+* ESP32
+* PIR Motion Sensor
+
+### 🔹 Frontend
+
+* React (Vite)
+* JavaScript
+* Axios
+* Web APIs (getUserMedia, Canvas)
+
+### 🔹 Backend
+
+* Spring Boot (Java)
+* REST APIs
+* JPA / Hibernate
+
+### 🔹 Database
+
+* MySQL
+
+### 🔹 Integrations
+
+* Roboflow API (AI Detection)
+* Telegram Bot API
 
 ---
 
@@ -159,6 +198,8 @@ spring.datasource.password=your_password
 
 telegram.bot.token=YOUR_BOT_TOKEN
 telegram.chat.id=YOUR_CHAT_ID
+
+roboflow.api.key=YOUR_API_KEY
 ```
 
 ---
@@ -173,25 +214,7 @@ npm run dev
 
 ---
 
-### 4️⃣ Access App
-
-Frontend:
-
-```
-http://localhost:5173
-```
-
-Backend:
-
-```
-http://localhost:8080
-```
-
----
-
 ## 📱 Telegram Alerts
-
-When an animal is detected, a message is sent:
 
 ```
 🚨 Animal Alert!
@@ -203,39 +226,37 @@ When an animal is detected, a message is sent:
 
 ---
 
-## ⚠️ Common Issues
+## ⚡ Engineering Challenges Solved
 
-* **CORS Error** → Add `@CrossOrigin` in controller
-* **Network Error** → Ensure backend is running
-* **Vite not found** → Run `npm install`
-* **Telegram not working** → Check bot token & chat ID
+* 🔄 Synchronizing frontend polling with backend state
+* ⚙️ Handling async camera initialization (React)
+* 🧠 Preventing race conditions using refs & cooldown logic
+* 🌐 Integrating external AI APIs (Roboflow)
+* 🎯 Filtering low-confidence predictions
 
 ---
 
 ## 🔮 Future Improvements
 
-* 🔥 Integrate real AI model (YOLO / Python API)
-* 📷 Raspberry Pi camera integration (live feed)
-* 🖼️ Send captured image in Telegram alert
-* 🌐 Deploy using Docker + AWS + NGINX
-* 🔐 Add authentication (JWT / Spring Security)
-* 🚨 Severity-based alerts (Tiger = high risk)
+* 📷 Raspberry Pi live camera integration
+* 🖼️ Send captured image in Telegram alerts
+* 🔐 Authentication (JWT / Spring Security)
+* 🐳 Docker + AWS deployment
+* ⚡ Replace polling with WebSockets
 
 ---
 
 ## 👨‍💻 Author
 
-Built as a full-stack AI + IoT project demonstrating:
+Built as a **real-time AI + IoT system** demonstrating:
 
-* Backend development (Spring Boot)
-* Frontend integration (React)
-* Real-time alert systems
+* Full-stack development
 * System design thinking
+* Event-driven architecture
+* External API integration
 
 ---
 
-## ⭐ Contribution / Feedback
+## ⭐ Contributions
 
-Feel free to fork, improve, and suggest ideas!
-
----
+Open to improvements, suggestions, and collaborations!
